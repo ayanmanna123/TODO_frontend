@@ -7,6 +7,8 @@ import TodoForm from './components/TodoForm';
 import CalendarView from './components/CalendarView';
 import Analytics from './components/Analytics';
 import NotificationCenter from './components/NotificationCenter';
+import LoginSignup from './components/LoginSignup';
+import { LogIn, UserPlus } from 'lucide-react'; 
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -148,6 +150,10 @@ function App() {
                     </span>
                   )}
                 </Link>
+                <Link to="/login" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                <UserPlus className="h-5 w-5 mr-1" />
+                   CreatAccount
+                </Link>
               </div>
             </div>
           </div>
@@ -186,6 +192,9 @@ function App() {
                 dismissNotification={dismissNotification}
               />
             } />
+             <Route path="/login" element={
+              <LoginSignup />
+            } />
           </Routes>
         </main>
 
@@ -213,6 +222,7 @@ function App() {
           </div>
         )}
       </div>
+     
     </Router>
   );
 }
