@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 import { Calendar, Clock, CheckCircle, List, BarChart2, Bell } from 'lucide-react';
 import axios from 'axios';
 import TodoList from './components/TodoList';
@@ -8,22 +8,39 @@ import CalendarView from './components/CalendarView';
 import Analytics from './components/Analytics';
 import NotificationCenter from './components/NotificationCenter';
 import LoginSignup from './components/LoginSignup';
-import { LogIn, UserPlus } from 'lucide-react'; 
+import { LogIn, UserPlus, LogOut } from 'lucide-react'; 
 
 const API_URL = 'http://localhost:5000/api';
+
+// Configure axios with auth token
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['auth-token'] = token;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 function App() {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
 
   useEffect(() => {
-    fetchTodos();
-    checkForEndOfDayNotification();
-    // Check for notifications every minute
-    const notificationInterval = setInterval(checkForEndOfDayNotification, 60000);
-    return () => clearInterval(notificationInterval);
-  }, []);
+    if (isAuthenticated) {
+      fetchTodos();
+      checkForEndOfDayNotification();
+      // Check for notifications every minute
+      const notificationInterval = setInterval(checkForEndOfDayNotification, 60000);
+      return () => clearInterval(notificationInterval);
+    }
+  }, [isAuthenticated]);
 
   const fetchTodos = async () => {
     try {
@@ -33,16 +50,24 @@ function App() {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching todos:', error);
+      // If we get 401, user is not authenticated
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
       setLoading(false);
     }
   };
-
+  
   const addTodo = async (todo) => {
     try {
       const response = await axios.post(`${API_URL}/todos`, todo);
       setTodos([...todos, response.data]);
     } catch (error) {
       console.error('Error adding todo:', error);
+      // Handle 401 error
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
     }
   };
 
@@ -57,6 +82,10 @@ function App() {
       }
     } catch (error) {
       console.error('Error updating todo:', error);
+      // Handle 401 error
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
     }
   };
 
@@ -66,6 +95,10 @@ function App() {
       setTodos(todos.filter(todo => todo._id !== id));
     } catch (error) {
       console.error('Error deleting todo:', error);
+      // Handle 401 error
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
     }
   };
 
@@ -102,6 +135,10 @@ function App() {
       }
     } catch (error) {
       console.error('Error planning tomorrow:', error);
+      // Handle 401 error
+      if (error.response && error.response.status === 401) {
+        handleLogout();
+      }
     }
   };
 
@@ -118,6 +155,24 @@ function App() {
     setNotifications(notifications.filter(notification => notification.id !== id));
   };
 
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setTodos([]);
+  };
+
+  // Protected route component
+  const ProtectedRoute = ({ children }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" />;
+    }
+    return children;
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
@@ -129,31 +184,43 @@ function App() {
                 <span className="ml-2 text-xl font-bold text-gray-800">Smart Todo</span>
               </div>
               <div className="flex">
-                <Link to="/" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
-                  <List className="h-5 w-5 mr-1" />
-                  Tasks
-                </Link>
-                <Link to="/calendar" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
-                  <Calendar className="h-5 w-5 mr-1" />
-                  Calendar
-                </Link>
-                <Link to="/analytics" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
-                  <BarChart2 className="h-5 w-5 mr-1" />
-                  Analytics
-                </Link>
-                <Link to="/notifications" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
-                  <Bell className="h-5 w-5 mr-1" />
-                  <span>Notifications</span>
-                  {notifications.length > 0 && (
-                    <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
-                      {notifications.length}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/login" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
-                <UserPlus className="h-5 w-5 mr-1" />
-                   CreatAccount
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                      <List className="h-5 w-5 mr-1" />
+                      Tasks
+                    </Link>
+                    <Link to="/calendar" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                      <Calendar className="h-5 w-5 mr-1" />
+                      Calendar
+                    </Link>
+                    <Link to="/analytics" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                      <BarChart2 className="h-5 w-5 mr-1" />
+                      Analytics
+                    </Link>
+                    <Link to="/notifications" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                      <Bell className="h-5 w-5 mr-1" />
+                      <span>Notifications</span>
+                      {notifications.length > 0 && (
+                        <span className="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                          {notifications.length}
+                        </span>
+                      )}
+                    </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500"
+                    >
+                      <LogOut className="h-5 w-5 mr-1" />
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <Link to="/login" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-500">
+                    <LogIn className="h-5 w-5 mr-1" />
+                    Login / Register
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -162,38 +229,46 @@ function App() {
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <Routes>
             <Route path="/" element={
-              <div>
-                <div className="mb-6">
-                  <h1 className="text-2xl font-semibold text-gray-800">My Tasks</h1>
-                  <TodoForm addTodo={addTodo} />
-                </div>
-                {loading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+              <ProtectedRoute>
+                <div>
+                  <div className="mb-6">
+                    <h1 className="text-2xl font-semibold text-gray-800">My Tasks</h1>
+                    <TodoForm addTodo={addTodo} />
                   </div>
-                ) : (
-                  <TodoList 
-                    todos={todos} 
-                    updateTodo={updateTodo} 
-                    deleteTodo={deleteTodo} 
-                  />
-                )}
-              </div>
+                  {loading ? (
+                    <div className="flex justify-center items-center h-40">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : (
+                    <TodoList 
+                      todos={todos} 
+                      updateTodo={updateTodo} 
+                      deleteTodo={deleteTodo} 
+                    />
+                  )}
+                </div>
+              </ProtectedRoute>
             } />
             <Route path="/calendar" element={
-              <CalendarView todos={todos} updateTodo={updateTodo} />
+              <ProtectedRoute>
+                <CalendarView todos={todos} updateTodo={updateTodo} />
+              </ProtectedRoute>
             } />
             <Route path="/analytics" element={
-              <Analytics todos={todos} />
+              <ProtectedRoute>
+                <Analytics todos={todos} />
+              </ProtectedRoute>
             } />
             <Route path="/notifications" element={
-              <NotificationCenter 
-                notifications={notifications}
-                dismissNotification={dismissNotification}
-              />
+              <ProtectedRoute>
+                <NotificationCenter 
+                  notifications={notifications}
+                  dismissNotification={dismissNotification}
+                />
+              </ProtectedRoute>
             } />
-             <Route path="/login" element={
-              <LoginSignup />
+            <Route path="/login" element={
+              <LoginSignup onLoginSuccess={handleLogin} />
             } />
           </Routes>
         </main>
@@ -222,7 +297,6 @@ function App() {
           </div>
         )}
       </div>
-     
     </Router>
   );
 }
