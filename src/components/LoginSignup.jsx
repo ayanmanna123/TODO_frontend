@@ -17,7 +17,7 @@ export default function LoginSignup({ onLoginSuccess }) {
 
   const handleLogin = async (userData) => {
     try {
-      const response = await fetch("https://todo-backensd.vercel.app/auth/login", {
+      const response = await fetch("https://todo-backensd.vercel.app/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function LoginSignup({ onLoginSuccess }) {
 
   const handleSendVerificationCode = async (userData) => {
     try {
-      const response = await fetch("https://todo-backensd.vercel.app/auth/send-verification-code", {
+      const response = await fetch("https://todo-backensd.vercel.app/api/auth/send-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
