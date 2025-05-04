@@ -10,7 +10,7 @@ import NotificationCenter from './components/NotificationCenter';
 import LoginSignup from './components/LoginSignup';
 import { LogIn, UserPlus, LogOut } from 'lucide-react'; 
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://todo-backensd.vercel.app/';
 
 // Configure axios with auth token
 axios.interceptors.request.use(

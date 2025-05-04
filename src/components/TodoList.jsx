@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle, Circle, Trash2, Edit, Clock, Calendar, Bell } from 'lucide-react';
  
+
 const TodoList = ({ todos, updateTodo, deleteTodo }) => {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -191,7 +192,9 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
                 </div>
               )}
               
-               
+              {showNotificationId === todo._id && !todo.completed && todo.dueDate && (
+                <EmailNotificationSettings todo={todo} updateTodo={updateTodo} />
+              )}
             </li>
           ))
         )}
