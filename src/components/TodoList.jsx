@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { CheckCircle, Circle, Trash2, Edit, Clock } from 'lucide-react';
-
+import { CheckCircle, Circle, Trash2, Edit, Clock, Calendar, Bell } from 'lucide-react';
+ 
 const TodoList = ({ todos, updateTodo, deleteTodo }) => {
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const [filter, setFilter] = useState('all');
+  const [showNotificationId, setShowNotificationId] = useState(null);
 
   const startEditing = (todo) => {
     setEditingId(todo._id);
@@ -24,6 +25,10 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
     });
   };
 
+  const toggleNotificationSettings = (id) => {
+    setShowNotificationId(showNotificationId === id ? null : id);
+  };
+
   const filteredTodos = () => {
     switch(filter) {
       case 'active':
@@ -41,6 +46,14 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -98,19 +111,44 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
                       autoFocus
                     />
                   ) : (
-                    <span className={`ml-3 ${todo.completed ? 'line-through text-gray-500' : ''}`}>
-                      {todo.title}
-                    </span>
+                    <div className="ml-3 flex-1">
+                      <span className={`${todo.completed ? 'line-through text-gray-500' : ''}`}>
+                        {todo.title}
+                      </span>
+                      
+                      {todo.emailNotify && (
+                        <div className="flex items-center mt-1 text-xs text-blue-500">
+                          <Bell className="h-3 w-3 mr-1" />
+                          <span>
+                            Email reminder {todo.notified ? 'sent' : 'set'} 
+                            ({todo.notifyTime}m before due time)
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
                 
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center text-gray-500 text-sm">
-                    <Clock className="h-4 w-4 mr-1" />
-                    <span>
-                      {todo.dueDate ? formatDate(todo.dueDate) : 'No due date'}
-                    </span>
-                  </div>
+                  {todo.dueDate && (
+                    <div className="flex flex-col items-end text-gray-500 text-sm">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>{formatDate(todo.dueDate)}</span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span>{formatTime(todo.dueDate)}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!todo.dueDate && (
+                    <div className="flex items-center text-gray-500 text-sm">
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span>No due date</span>
+                    </div>
+                  )}
                   
                   {editingId === todo._id ? (
                     <button
@@ -120,12 +158,22 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
                       Save
                     </button>
                   ) : (
-                    <button
-                      onClick={() => startEditing(todo)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
+                    <>
+                      <button
+                        onClick={() => startEditing(todo)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      {todo.dueDate && !todo.completed && (
+                        <button
+                          onClick={() => toggleNotificationSettings(todo._id)}
+                          className={`${todo.emailNotify ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-600`}
+                        >
+                          <Bell className="h-4 w-4" />
+                        </button>
+                      )}
+                    </>
                   )}
                   
                   <button
@@ -139,9 +187,11 @@ const TodoList = ({ todos, updateTodo, deleteTodo }) => {
               
               {todo.completed && todo.completedAt && (
                 <div className="mt-1 text-xs text-gray-500 flex items-center">
-                  <span>Completed on {formatDate(todo.completedAt)}</span>
+                  <span>Completed on {formatDate(todo.completedAt)} at {formatTime(todo.completedAt)}</span>
                 </div>
               )}
+              
+               
             </li>
           ))
         )}

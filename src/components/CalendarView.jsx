@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
 const CalendarView = ({ todos, updateTodo }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -94,6 +94,15 @@ const CalendarView = ({ todos, updateTodo }) => {
     }
   };
   
+  // Format time for display
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b">
@@ -164,6 +173,10 @@ const CalendarView = ({ todos, updateTodo }) => {
                           <span className={`${todo.completed ? 'line-through' : ''} truncate`}>
                             {todo.title}
                           </span>
+                        </div>
+                        <div className="mt-1 flex items-center text-xs opacity-80">
+                          <Clock className="h-3 w-3 mr-1" />
+                          <span>{formatTime(todo.dueDate)}</span>
                         </div>
                       </div>
                     ))}
