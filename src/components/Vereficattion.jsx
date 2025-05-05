@@ -17,7 +17,7 @@ const Verification = ({ email, credentials, onVerificationSuccess, onCancel }) =
     try {
       // First verify the code
       const verifyResponse = await fetch(
-        "http://localhost:5000/api/auth/verify-code",
+        "https://todo-backensd.vercel.app/api/auth/verify-code",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -34,7 +34,7 @@ const Verification = ({ email, credentials, onVerificationSuccess, onCancel }) =
       // If verification successful, register the user
       if (credentials) {
         const registerResponse = await fetch(
-          "http://localhost:5000/api/auth/register",
+          "https://todo-backensd.vercel.app/api/auth/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -72,7 +72,7 @@ const Verification = ({ email, credentials, onVerificationSuccess, onCancel }) =
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/send-verification-code",
+        "https://todo-backensd.vercel.app/api/auth/send-verification-code",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
