@@ -108,7 +108,7 @@ function App() {
     const minutes = now.getMinutes();
     
     // Check if it's end of day (5:00 PM)
-    if (hours === 17 && minutes === 0) {
+    if (hours === 24 && minutes === 0) {
       const completedToday = todos.filter(todo => {
         const completedDate = todo.completedAt ? new Date(todo.completedAt) : null;
         return completedDate && 
